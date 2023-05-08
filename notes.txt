@@ -10,3 +10,6 @@ Install Flask and flask_sqlachemy
 
 pip install Flask
 pip install Flask-SQLAlchemy
+pip install flask-login
+pip install -U Flask-WTF
+pip install email_validator

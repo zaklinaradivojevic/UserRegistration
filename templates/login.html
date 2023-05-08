@@ -1,3 +1,7 @@
+{% for message in get_flashed_messages() %}
+<p style="color: red;">Error : {{ message }}</p>
+{% endfor %}
+
 <h1><a href="{{ url_for('register') }}">Create a new Account!</a></h1>
 <form action="" method="post">
    {{ form.hidden_tag() }}

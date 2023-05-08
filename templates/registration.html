@@ -1,3 +1,7 @@
+{% for message in get_flashed_messages() %}
+<p style="color: red;">Error : {{ message }}</p>
+{% endfor %}
+
 <h1 style="text-align: justify; color: blue;">Create an Account</h1>
 <br>
 <form action="" method="post">
