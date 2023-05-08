@@ -16,6 +16,8 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydb.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+# Replace time.clock() with time.process_time() or time.perf_counter()
+db_timer = time.process_time() 
 
 
 login_manager = LoginManager()
