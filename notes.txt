@@ -4,8 +4,6 @@ python -m venv env
 
 #source env/bin/activate
 
-env/bin/activate
-
 Install Flask and flask_sqlachemy
 
 pip install Flask
@@ -13,3 +11,13 @@ pip install Flask-SQLAlchemy
 pip install flask-login
 pip install -U Flask-WTF
 pip install email_validator
+
+source/env/bin/activate
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+./source/env/Scripts/Activate.ps1     #powershell
+
+export FLASK_APP=app.py
+flask db init
+flask db migrate -m "Initial migration."
+flask db upgrade

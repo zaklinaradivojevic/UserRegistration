@@ -17,13 +17,16 @@ from forms import LoginForm, RegistrationForm
 from werkzeug.security import check_password_hash, generate_password_hash
 from wtforms import BooleanField, PasswordField, StringField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo
+from flask_migrate import Migrate
+from sqlalchemy.exc import IntegrityError
 
 app = Flask(__name__)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///mydb.db"
+app.config['SECRET_KEY'] = 'my_secret_key'
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
-
+migrate = Migrate(app, db)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -31,7 +34,7 @@ login_manager.init_app(app)
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.get(user_id)
+    return User.query.get(int(user_id))
 
 
 class User(UserMixin, db.Model):
@@ -47,22 +50,35 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    def __repr__(self):
+        return f"<User {self.username}>"
 
-@app.route("/home")
+
+@app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template("index.html",current_user=current_user)
 
 
-@app.route("/register", methods=["POST", "GET"])
+@app.route("/register", methods=["GET", "POST"])
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data, email=form.email.data)
-        user.set_password(form.password1.data)
-        db.session.add(user)
-        db.session.commit()
-        return redirect(url_for("login"))
-    return render_template("registration.html", form=form)
+        username = form.username.data
+        email = form.email.data
+        password = form.password1.data
+        user = User(username=username, email=email)
+        user.set_password(password)
+        try:
+            db.session.add(user)
+            db.session.commit()
+            flash("Registration successful!")
+            app.logger.info(f"User {username} registered successfully.")
+            return redirect(url_for("login"))
+        except IntegrityError:
+            db.session.rollback()
+            flash("Username or email already exists.")
+            app.logger.error(f"Registration failed: {username} already exists.")
+    return render_template("register.html", form=form)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -74,14 +90,15 @@ def login():
             login_user(user)
             next = request.args.get("next")
             return redirect(next or url_for("home"))
-        flash("Invalid email address or Password.")
+        else:
+            flash("Invalid email address or Password.")
     return render_template("login.html", form=form)
 
 
-@app.route("/forbidden", methods=["GET", "POST"])
+@app.route("/forbidden")
 @login_required
 def protected():
-    return redirect(url_for("forbidden.html"))
+    return render_template("forbidden.html")
 
 
 @app.route("/logout")
@@ -91,4 +108,6 @@ def logout():
 
 
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(debug=True, host='0.0.0.0', port=1324)
